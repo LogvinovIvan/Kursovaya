@@ -44,6 +44,8 @@ private final List<String> data;
         {
             String login = data.get(2);
             String password  = data.get(3);
+            Integer id1 = db.checkRegistration(login);
+            if(id1>0) return -1;
             db.setPersonalInformation(data);
             Integer id  = db.getIdUsers(login, password);
             return id;

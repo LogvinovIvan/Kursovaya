@@ -38,8 +38,28 @@ public class DataBase {
         }
     }
     
+    
+    public int checkRegistration(String login) {
+      Integer id = 0;
+        try {
+            String request = "SELECT * FROM `personaldata` WHERE `login` LIKE '"+login+"'";
+            resultSet = (ResultSet) statement.executeQuery(request);
+            resultSet.next();
+            id= resultSet.getInt("id");
+        } catch (SQLException ex) {
+            Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        finally{
+        return  id;
+        }  
+    }
+    
+    
+    
+    
+    
     public int getIdUsers(String login, String password) {
-        Integer id = 0;
+        Integer id = -2;
         try {
             String request = "SELECT * FROM `personaldata` WHERE `login` LIKE '"+login+"' AND `password` LIKE '"+password+"'";
             resultSet = (ResultSet) statement.executeQuery(request);
@@ -59,8 +79,10 @@ public class DataBase {
         String surname = personalData.get(1);
         String login = personalData.get(2);
         String password = personalData.get(3);
+        String date = personalData.get(4);
+        String hobby = personalData.get(5);
         try {
-            statement.executeUpdate("INSERT INTO `messenger`.`personaldata` (`id`, `login`, `name`, `surname`, `password`) VALUES (NULL, '"+login+"', '"+name+"', '"+surname+"', '"+password+"')");
+            statement.executeUpdate("INSERT INTO `messenger`.`personaldata` (`id`, `login`, `name`, `surname`, `password`, `date`, `hobby`) VALUES (NULL, '"+login+"', '"+name+"', '"+surname+"', '"+password+"', '"+date+"', '"+hobby+"')");
         } catch (SQLException ex) {
             Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -80,7 +102,7 @@ public class DataBase {
     public void saveConnectHystory(String login1, String login2, String message)
     {
         try {
-            String SQL = "INSERT INTO `messenger`.`chat2` (`numb`, `login1`, `login2`, `msg`) VALUES (NULL, '"+login1+"', '"+login2+"', "+message+"')";
+            String SQL = "INSERT INTO `messenger`.`chat2` (`numb`, `login1`, `login2`, `msg`) VALUES (NULL, '"+login1+"', '"+login2+"', '"+message+"')";
             System.out.print(SQL);
             statement.executeUpdate(SQL);
         } catch (SQLException ex) {
@@ -108,8 +130,9 @@ public class DataBase {
         try {
             resultSet = (ResultSet) statement.executeQuery("SELECT * FROM `chat2` WHERE `login1` LIKE '"+login1+"' AND `login2` LIKE '"+login2+"'");
             resultSet.next();
+            hystory += resultSet.getString("msg") + "\n";
             while(resultSet.next()==true)
-            {hystory += resultSet.getString("login")+":" + resultSet.getString("msg") + "\n";}
+            {hystory += resultSet.getString("msg") + "\n";}
         } catch (SQLException ex) {
             Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -124,6 +147,8 @@ public class DataBase {
             data.add(resultSet.getString("name"));
             data.add(resultSet.getString("surname"));
             data.add(resultSet.getString("login"));
+            data.add(resultSet.getString("date"));
+            data.add(resultSet.getString("hobby"));
             return data;
         } catch (SQLException ex) {
             Logger.getLogger(DataBase.class.getName()).log(Level.SEVERE, null, ex);

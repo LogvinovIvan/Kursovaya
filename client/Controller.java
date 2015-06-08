@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.print.DocFlavor;
 import views.Views;
 
 /**
@@ -31,8 +32,9 @@ private Map<String,Integer> userOnline;
         return request;
     }
 
-    public void createMainPage() {
-        //формирую запрос на обновление истории  общий сообщений на свои данные и кто онлайн 
+    public void createHystoryRequest(String login, String request) {
+       request+=userOnline.get(login).toString()+"\n\n";
+       connection.sendInf(request);
     }
 
     public void processingResponse(String typeResponse, BufferedReader reader) throws IOException {
@@ -42,8 +44,35 @@ private Map<String,Integer> userOnline;
                 startClientPage();
                 break;
             }
+            case "badRegistration":{
+                registration.badRegistration();
+                break;
+            }
+            
+            case "badAutefication":{
+                authorization.badAuthification();
+                break;
+            }
+            
+            case "illegalAutefication":{
+                authorization.illegalAuthification();
+                break;
+            
+            }
+            case "personalInf": {
+                getPersonalInformation(reader);
+                break;
+            }
+            case "conect": {
+                addConectMessage(reader);
+                break;
+            }
             case "updateUser":{
                 updateUsersOnline(reader);
+                break;
+            }
+            case "updateConectHystory": {
+                updateConectHystory(reader);
                 break;
             }
             case "message":{
@@ -79,6 +108,21 @@ private Map<String,Integer> userOnline;
         
     }
     
+    public void requestPersonalInformation(String login){
+        String requset = "personalInf\n";
+        requset+=userOnline.get(login).toString()+"\n\n";
+        connection.sendInf(requset);
+    }
+    
+    
+    public void getPersonalInformation(BufferedReader reader) throws IOException {
+        String name = reader.readLine();
+        String surname = reader.readLine();
+        String date = reader.readLine();
+        String hobby = reader.readLine();
+        clientPage.setPersonalInf(name, surname,date,hobby);
+    }
+    
     
     private void addGeneralMessage(BufferedReader reader) throws IOException
     {
@@ -101,7 +145,12 @@ private Map<String,Integer> userOnline;
         clientPage.addUserList(userOnline);
     }
     
-    
+    public void sendConectMessage(String login, String message)
+    {
+        String request = "conect\n" + userOnline.get(login).toString()+"\n";
+        request+=message+"\n\n";
+        connection.sendInf(request);
+    }
     public void updateUsersOnline(BufferedReader reader) throws IOException
     {
         String login;
@@ -116,6 +165,21 @@ private Map<String,Integer> userOnline;
         }
         clientPage.addUserList(userOnline);
     }
+    
+    
+    public void updateConectHystory(BufferedReader reader) throws IOException
+    {
+        String messages  = "";
+        String buf = "";
+        while (true) {            
+            buf = reader.readLine();
+            if("".equals(buf)) break;
+            messages+=buf;
+        }
+     clientPage.updateConectHystory(messages);
+    }
+    
+    
     
     
     public void updateHystory(BufferedReader reader) throws IOException {
@@ -153,6 +217,14 @@ private Map<String,Integer> userOnline;
     {
          connection = new Connection(inf,this);
          
+    }
+    
+    public void addConectMessage(BufferedReader reader) throws IOException
+    {
+        String login = reader.readLine();
+        String message = reader.readLine();
+        clientPage.addConectMessage(login, message+"\n");
+        
     }
     
     

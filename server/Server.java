@@ -46,17 +46,18 @@ public class Server {
         idUsers = new ArrayList<>();
         dataUsers = new HashMap<>();
          dataBase = new DataBase();
+         
         
         try {
             ServerSocket ss = new ServerSocket(5000);
             while (true) {
                 Socket sock = ss.accept();
                 System.out.println("Got user!");
-               
+               PrintWriter writer = new PrintWriter(sock.getOutputStream());
                 Avtorization avtorization = new Avtorization(sock.getInputStream(),dataBase);
                 int idUser = avtorization.getIdUsers();
-                if (idUser > 0) {
-                    PrintWriter writer = new PrintWriter(sock.getOutputStream());
+                if (idUser > 0&& !dataUsers.containsKey(idUser)) {
+                    
                     dataUsers.put(idUser, new UsersData(dataBase.getPersonalData(idUser),writer));
                     streams.add(writer);
                     idUsers.add(idUser);
@@ -70,6 +71,17 @@ public class Server {
                     Thread t = new Thread(new Listener(sock,idUser,writer));
                     t.start();
                 } else {
+                    String response;
+                    if(idUser==-1)
+                   {
+                       response ="badRegistration\n\n";
+                   }
+                   else if(idUser==-2){
+                        response ="badAutefication\n\n";
+                   }
+                   else{ response ="illegalAutefication\n\n";}
+                   writer.write(response);
+                   writer.flush();
                 }
             }
         } catch (Exception ex) {
@@ -158,9 +170,17 @@ public class Server {
         String request = "Hystory\n";
         request+=hystory+"\n\n";
         writer.write(request);
+        writer.flush();
     }
     
-    
+    public static void updateConnectHystory(Integer id1, Integer id2, PrintWriter writer)
+    {
+        String data = dataBase.getConnetHystory(dataUsers.get(id1).getLogin(), dataUsers.get(id2).getLogin());
+        String response = "updateConectHystory\n"+data + "\n";
+        writer.write(response);
+        writer.flush();
+        
+    }
     
     
     private static  void conectToUser(Integer id1, Integer id2,BufferedReader reader) throws IOException
@@ -172,7 +192,7 @@ public class Server {
         while(true)
         {
             buf = reader.readLine();
-            if(buf=="") break;
+            if("".equals(buf)) break;
             message+=buf;
         }
         
@@ -183,12 +203,20 @@ public class Server {
         dataBase.saveConnectHystory(dataUsers.get(id1).getLogin(), dataUsers.get(id2).getLogin(), message);
         dataBase.saveConnectHystory(dataUsers.get(id2).getLogin(), dataUsers.get(id1).getLogin(), message);
         dataUsers.get(id1).getWriter().write(response1);
+        dataUsers.get(id1).getWriter().flush();
         dataUsers.get(id2).getWriter().write(response2);
+        dataUsers.get(id2).getWriter().flush();
         
     }
     
     
-    
+    private static void getPersonalInf(Integer id, PrintWriter writer )
+    {
+        String request = "personalInf\n";
+        request+=dataUsers.get(id).getName()+"\n"+dataUsers.get(id).getSurname()+"\n" +dataUsers.get(id).getData()+"\n"+dataUsers.get(id).getHobby()+"\n"+ "\n\n";
+        writer.write(request);
+        writer.flush();
+    }
     
     
     
@@ -244,18 +272,21 @@ public class Server {
                                conectToUser(idUser,id2,reader);
                                break;
                            }
-                           
-                           case "updateHystory": {
-                               
+                           case "updateconectHystory":{
+                               Integer id2 = Integer.parseInt(reader.readLine());
+                               updateConnectHystory(idUser, id2,writer);
+                               break;
+                           }
+                           case "personalInf": {
+                               Integer id2 = Integer.parseInt(reader.readLine());
+                               getPersonalInf(id2, writer);
+                               break;
                            }
                            case "updateGeneralHystory": {
                                updateGeneralHystory(writer);
                                break;
                            }
-                           case "downloadFile": {
-                           }
-                           case "loadFile": {
-                           }
+                           
                        }
                    }
                
